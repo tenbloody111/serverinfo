@@ -85,6 +85,39 @@
   }
   button:active { background: var(--accent-dim); }
   button:disabled { opacity: 0.5; }
+
+  /* Tombol Ping dengan garis progress di bawah teks */
+  #pingBtn { transition: background 0.15s ease; }
+  .btn-inner {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+  }
+  .btn-progress {
+    display: none;
+    height: 4px;
+    min-width: 120px;
+    border-radius: 999px;
+    background: rgba(4, 33, 15, 0.22);
+    overflow: hidden;
+  }
+  .btn-progress-fill {
+    display: block;
+    height: 100%;
+    width: 0%;
+    background: #04210f;
+    border-radius: 999px;
+    transition: width 0.2s linear;
+  }
+  #pingBtn.loading {
+    opacity: 1;
+    background: var(--accent-dim);
+    cursor: progress;
+    padding-top: 7px;
+    padding-bottom: 7px;
+  }
+  #pingBtn.loading .btn-progress { display: block; }
   #result { display: none; }
   .status-line {
     display: flex;
@@ -251,94 +284,158 @@
     transform: translateX(16px);
   }
 
-  .console-box {
-    background: #000;
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 10px;
-    height: 320px;
-    overflow-y: auto;
-    font-family: "SFMono-Regular", Consolas, Menlo, monospace;
-    font-size: 0.78rem;
-    line-height: 1.5;
-    color: #4ade80;
-    white-space: pre-wrap;
-    word-break: break-all;
-  }
-  .console-box .line-err { color: #f87171; }
+  /* ===== Console ===== */
+  .console-card { padding: 14px; }
   .console-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 10px;
+    gap: 10px;
+    margin-bottom: 12px;
   }
-  .console-header h2 {
+  .console-title { min-width: 0; }
+  .console-title h2 {
     font-size: 0.95rem;
-    margin: 0;
+    margin: 0 0 3px;
+    white-space: nowrap;
   }
-  .console-actions {
+  .console-meta {
     display: flex;
+    align-items: center;
     gap: 6px;
+    font-size: 0.7rem;
+    color: var(--muted);
   }
+  .live-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 6px var(--accent);
+    animation: pulse 1.6s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+  .console-actions { display: flex; gap: 8px; flex-shrink: 0; }
   .btn-small {
     width: auto;
-    padding: 6px 12px;
-    font-size: 0.78rem;
+    min-height: 40px;
+    padding: 0 14px;
+    font-size: 0.82rem;
     background: var(--border);
     color: var(--text);
+    border-radius: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
   }
   .btn-small:active { background: #475569; }
-  .btn-stop {
-    background: var(--danger);
-    color: #fff;
-  }
+  .btn-icon { width: 40px; padding: 0; font-size: 1.05rem; }
+  .btn-stop { background: var(--danger); color: #fff; }
   .btn-stop:active { background: #b91c1c; }
+
+  .console-wrap { position: relative; }
+  .console-box {
+    background: #05080f;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 8px 0;
+    height: 58vh;
+    height: 58dvh;
+    min-height: 260px;
+    max-height: 560px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    font-family: "SFMono-Regular", Consolas, Menlo, monospace;
+    font-size: 0.74rem;
+    line-height: 1.45;
+  }
+  .log-line {
+    display: flex;
+    gap: 8px;
+    padding: 3px 10px 3px 8px;
+    border-left: 3px solid transparent;
+    color: #cbd5e1;
+  }
+  .log-time {
+    flex: none;
+    color: #64748b;
+    font-variant-numeric: tabular-nums;
+  }
+  .log-msg {
+    min-width: 0;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+  .log-line.ok { color: #4ade80; }
+  .log-line.err {
+    color: #f87171;
+    border-left-color: #ef4444;
+    background: rgba(239, 68, 68, 0.08);
+  }
+  .log-line.warn {
+    color: #fbbf24;
+    border-left-color: #f59e0b;
+    background: rgba(245, 158, 11, 0.08);
+  }
+  .log-line.sep {
+    color: #38bdf8;
+    border-left-color: #38bdf8;
+    font-weight: 600;
+    margin-top: 6px;
+  }
+  .log-line.sep:first-child { margin-top: 0; }
+  .console-empty {
+    color: var(--muted);
+    text-align: center;
+    padding: 40px 16px;
+    font-size: 0.8rem;
+    line-height: 1.6;
+    font-family: -apple-system, system-ui, "Segoe UI", Roboto, sans-serif;
+  }
+  .console-empty.err-text { color: #f87171; }
+
+  .jump-bottom {
+    position: absolute;
+    right: 10px;
+    bottom: 10px;
+    width: 38px;
+    height: 38px;
+    padding: 0;
+    border-radius: 50%;
+    background: var(--accent);
+    color: #04210f;
+    font-size: 1.1rem;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5);
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(6px);
+    transition: opacity 0.15s ease, transform 0.15s ease;
+  }
+  .jump-bottom.show { opacity: 1; pointer-events: auto; transform: none; }
 
   /* Console fullscreen */
   .console-card.fullscreen {
     position: fixed;
     inset: 0;
+    height: 100vh;
+    height: 100dvh;
     z-index: 100;
     margin: 0;
     border-radius: 0;
     border: none;
     display: flex;
     flex-direction: column;
-    padding: calc(14px + env(safe-area-inset-top, 0px)) 14px calc(14px + env(safe-area-inset-bottom, 0px));
+    padding: calc(12px + env(safe-area-inset-top, 0px)) 12px calc(12px + env(safe-area-inset-bottom, 0px));
   }
+  .console-card.fullscreen .console-wrap { flex: 1; min-height: 0; }
   .console-card.fullscreen .console-box {
-    flex: 1;
-    height: auto;
+    height: 100%;
+    max-height: none;
     min-height: 0;
-    font-size: 0.85rem;
+    font-size: 0.8rem;
   }
   body.no-scroll { overflow: hidden; }
-
-  /* Progress bar */
-  .progress-wrap { display: none; margin-bottom: 14px; }
-  .progress-wrap.active { display: block; }
-  .progress-track {
-    width: 100%;
-    height: 8px;
-    background: #0f172a;
-    border: 1px solid var(--border);
-    border-radius: 999px;
-    overflow: hidden;
-  }
-  .progress-fill {
-    height: 100%;
-    width: 0%;
-    background: linear-gradient(90deg, var(--accent-dim), var(--accent));
-    border-radius: 999px;
-    transition: width 0.2s linear;
-  }
-  .progress-meta {
-    display: flex;
-    justify-content: space-between;
-    margin-top: 6px;
-    font-size: 0.72rem;
-    color: var(--muted);
-  }
 </style>
 </head>
 <body>
@@ -399,20 +496,18 @@
         </label>
       </div>
 
-      <button id="pingBtn" onclick="doPing()">Ping Server</button>
+      <button id="pingBtn" onclick="doPing()">
+        <span class="btn-inner">
+          <span id="pingBtnLabel">Ping Server</span>
+          <span class="btn-progress"><span class="btn-progress-fill" id="progressFill"></span></span>
+        </span>
+      </button>
     </div>
 
     <div class="card" id="result">
       <div class="status-line">
         <div class="dot" id="statusDot"></div>
         <strong id="statusText">-</strong>
-      </div>
-      <div class="progress-wrap" id="progressWrap">
-        <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
-        <div class="progress-meta">
-          <span id="progressText">Menunggu balasan...</span>
-          <span id="progressTime">0.0 dtk</span>
-        </div>
       </div>
       <div id="infoBox"></div>
     </div>
@@ -421,14 +516,20 @@
   <div id="panel-console" class="panel">
     <div class="card console-card" id="consoleCard">
       <div class="console-header">
-        <h2>🖥️ Console Backend</h2>
+        <div class="console-title">
+          <h2>🖥️ Console</h2>
+          <div class="console-meta"><span class="live-dot"></span><span id="logCount">0 baris</span></div>
+        </div>
         <div class="console-actions">
-          <button class="btn-small btn-stop" onclick="stopBackend()" title="Hentikan ping yang sedang berjalan">⏹ Stop</button>
-          <button class="btn-small" id="fullscreenBtn" onclick="toggleConsoleFullscreen()" title="Perbesar console">⛶</button>
-          <button class="btn-small" onclick="clearLogs()">Clear</button>
+          <button class="btn-small btn-stop" onclick="stopBackend()" title="Hentikan ping yang sedang berjalan" aria-label="Stop">⏹ Stop</button>
+          <button class="btn-small btn-icon" id="fullscreenBtn" onclick="toggleConsoleFullscreen()" title="Perbesar console" aria-label="Perbesar console">⛶</button>
+          <button class="btn-small btn-icon" onclick="clearLogs()" title="Bersihkan log" aria-label="Bersihkan log">🗑</button>
         </div>
       </div>
-      <div class="console-box" id="consoleBox">Menunggu aktivitas backend...</div>
+      <div class="console-wrap">
+        <div class="console-box" id="consoleBox"><div class="console-empty">Menunggu aktivitas backend...</div></div>
+        <button class="jump-bottom" id="jumpBottom" onclick="scrollConsoleToBottom(true)" aria-label="Ke log terbaru">↓</button>
+      </div>
     </div>
   </div>
 
@@ -447,12 +548,10 @@ let progressHideTimer = null;
 
 function startProgress(packetCount, timeoutMs) {
   // Perkiraan waktu tunggu maksimum = jumlah packet x timeout per packet.
-  // Kalau server membalas cepat, bar langsung lompat ke 100%.
+  // Kalau server membalas cepat, garis langsung lompat ke 100%.
   const maxMs = Math.max(1, packetCount) * timeoutMs;
-  const wrap = document.getElementById('progressWrap');
+  const btn = document.getElementById('pingBtn');
   const fill = document.getElementById('progressFill');
-  const time = document.getElementById('progressTime');
-  const text = document.getElementById('progressText');
   const started = Date.now();
 
   clearInterval(progressTimer);
@@ -461,32 +560,19 @@ function startProgress(packetCount, timeoutMs) {
   fill.style.width = '0%';
   void fill.offsetWidth; // paksa reflow supaya animasi mulai dari 0
   fill.style.transition = '';
-  wrap.classList.add('active');
-  text.textContent = `Menunggu balasan (maks. ${formatSeconds(maxMs)})`;
-  time.textContent = '0.0 dtk';
+  btn.classList.add('loading');
 
   progressTimer = setInterval(() => {
-    const elapsed = Date.now() - started;
-    const pct = Math.min(95, (elapsed / maxMs) * 100);
+    const pct = Math.min(95, ((Date.now() - started) / maxMs) * 100);
     fill.style.width = pct + '%';
-    time.textContent = (elapsed / 1000).toFixed(1) + ' dtk';
   }, 100);
 }
 
-function finishProgress() {
+function finishProgress(onDone) {
   clearInterval(progressTimer);
   progressTimer = null;
-  const wrap = document.getElementById('progressWrap');
-  const fill = document.getElementById('progressFill');
-  fill.style.width = '100%';
-  progressHideTimer = setTimeout(() => wrap.classList.remove('active'), 250);
-}
-
-function formatSeconds(ms) {
-  const s = Math.round(ms / 1000);
-  if (s >= 60 && s % 60 === 0) return (s / 60) + ' mnt';
-  if (s >= 60) return Math.floor(s / 60) + ' mnt ' + (s % 60) + ' dtk';
-  return s + ' dtk';
+  document.getElementById('progressFill').style.width = '100%';
+  progressHideTimer = setTimeout(onDone, 250);
 }
 
 async function doPing(isAuto) {
@@ -497,6 +583,7 @@ async function doPing(isAuto) {
   const count = document.getElementById('packetCount').value || '1';
   const timeout = document.getElementById('timeoutSelect').value || '3000';
   const btn = document.getElementById('pingBtn');
+  const label = document.getElementById('pingBtnLabel');
   const resultBox = document.getElementById('result');
   const statusDot = document.getElementById('statusDot');
   const statusText = document.getElementById('statusText');
@@ -513,7 +600,7 @@ async function doPing(isAuto) {
   pingController = new AbortController();
   if (!isRealtime) {
     btn.disabled = true;
-    btn.textContent = 'Mengecek...';
+    label.textContent = 'Mengecek...';
   }
   resultBox.style.display = 'block';
   if (!isAuto) {
@@ -582,11 +669,15 @@ async function doPing(isAuto) {
   } finally {
     pingInFlight = false;
     pingController = null;
-    finishProgress();
-    if (!document.getElementById('realtimeToggle').checked) {
-      btn.disabled = false;
-      btn.textContent = 'Ping Server';
-    }
+    const resetBtn = () => {
+      btn.classList.remove('loading');
+      if (!document.getElementById('realtimeToggle').checked) {
+        btn.disabled = false;
+        label.textContent = 'Ping Server';
+      }
+    };
+    // Ping manual: biarkan garis progress penuh sebentar sebelum tombol kembali normal
+    if (!isRealtime) finishProgress(resetBtn); else resetBtn();
   }
 }
 
@@ -595,6 +686,7 @@ let realtimeTimer = null;
 function toggleRealtime() {
   const checked = document.getElementById('realtimeToggle').checked;
   const btn = document.getElementById('pingBtn');
+  const label = document.getElementById('pingBtnLabel');
   const host = document.getElementById('host').value.trim();
 
   if (checked) {
@@ -604,14 +696,14 @@ function toggleRealtime() {
       return;
     }
     btn.disabled = true;
-    btn.textContent = 'Mode realtime aktif...';
+    label.textContent = 'Mode realtime aktif...';
     doPing(true);
     realtimeTimer = setInterval(() => doPing(true), 1000);
   } else {
     if (realtimeTimer) clearInterval(realtimeTimer);
     realtimeTimer = null;
     btn.disabled = false;
-    btn.textContent = 'Ping Server';
+    label.textContent = 'Ping Server';
   }
 }
 
@@ -652,7 +744,10 @@ function setConsoleFullscreen(on) {
   document.body.classList.toggle('no-scroll', on);
   btn.textContent = on ? '✕' : '⛶';
   btn.title = on ? 'Kecilkan console' : 'Perbesar console';
-  box.scrollTop = box.scrollHeight;
+  requestAnimationFrame(() => {
+    box.scrollTop = box.scrollHeight;
+    updateJumpButton();
+  });
 }
 
 function toggleConsoleFullscreen() {
@@ -682,27 +777,66 @@ function switchTab(tab) {
   }
 }
 
+let lastLogSig = null;
+
+function classifyLog(msg) {
+  if (/^---/.test(msg)) return 'sep';
+  if (/error|gagal|timeout/i.test(msg)) return 'err';
+  if (/dibatalkan|stop|memutus|dihentikan|dibersihkan/i.test(msg)) return 'warn';
+  if (/berhasil|menerima|selesai|terkirim/i.test(msg)) return 'ok';
+  return 'info';
+}
+
+function renderLogLine(line) {
+  const m = line.match(/^\[([^\]]+)\]\s*(.*)$/);
+  const time = m ? m[1] : '';
+  const msg = m ? m[2] : line;
+  return `<div class="log-line ${classifyLog(msg)}"><span class="log-time">${escapeHtml(time)}</span><span class="log-msg">${escapeHtml(msg)}</span></div>`;
+}
+
+function isConsoleAtBottom(box) {
+  return box.scrollHeight - box.scrollTop - box.clientHeight < 24;
+}
+
+function updateJumpButton() {
+  const box = document.getElementById('consoleBox');
+  document.getElementById('jumpBottom').classList.toggle('show', !isConsoleAtBottom(box));
+}
+
+function scrollConsoleToBottom(smooth) {
+  const box = document.getElementById('consoleBox');
+  box.scrollTo({ top: box.scrollHeight, behavior: smooth ? 'smooth' : 'auto' });
+}
+
+document.getElementById('consoleBox').addEventListener('scroll', updateJumpButton, { passive: true });
+
 async function fetchLogs() {
   const backend = document.getElementById('backend').value.trim().replace(/\/$/, '');
   const box = document.getElementById('consoleBox');
+  const countEl = document.getElementById('logCount');
   try {
     const res = await fetch(`${backend}/api/logs`);
     const data = await res.json();
-    const wasAtBottom = box.scrollHeight - box.scrollTop - box.clientHeight < 20;
+    const logs = data.logs || [];
+    countEl.textContent = logs.length + ' baris';
 
-    if (!data.logs || data.logs.length === 0) {
-      box.textContent = 'Belum ada aktivitas. Lakukan "Cek Ping" untuk melihat log di sini.';
+    // Lewati render ulang kalau log tidak berubah (tidak berkedip, teks bisa diseleksi)
+    const sig = logs.length + '|' + (logs[logs.length - 1] || '');
+    if (sig === lastLogSig) return;
+    lastLogSig = sig;
+
+    const wasAtBottom = isConsoleAtBottom(box);
+    if (logs.length === 0) {
+      box.innerHTML = '<div class="console-empty">Belum ada aktivitas.<br>Lakukan "Cek Ping" untuk melihat log di sini.</div>';
     } else {
-      box.innerHTML = data.logs
-        .map(line => {
-          const cls = /error|gagal|timeout/i.test(line) ? ' class="line-err"' : '';
-          return `<div${cls}>${escapeHtml(line)}</div>`;
-        })
-        .join('');
+      box.innerHTML = logs.map(renderLogLine).join('');
     }
     if (wasAtBottom) box.scrollTop = box.scrollHeight;
+    updateJumpButton();
   } catch (e) {
-    box.textContent = `Tidak bisa mengambil log dari backend: ${e.message}`;
+    lastLogSig = null;
+    countEl.textContent = 'offline';
+    box.innerHTML = `<div class="console-empty err-text">Tidak bisa mengambil log dari backend:<br>${escapeHtml(e.message)}</div>`;
   }
 }
 
