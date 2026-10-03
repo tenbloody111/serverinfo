@@ -403,6 +403,59 @@
   .console-box .line-join { color: #4ade80; }
   .console-box .line-leave { color: #f87171; }
   .console-box .line-info { color: #8893a8; }
+
+  .player-counter-box {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    padding: 6px 0 4px;
+  }
+  .counter-roll-wrap {
+    overflow: hidden;
+    height: 2.4rem;
+    display: flex;
+    align-items: center;
+  }
+  .counter-roll {
+    font-size: 2rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: var(--text);
+    display: inline-block;
+    font-variant-numeric: tabular-nums;
+  }
+  .counter-roll.rolling-up { animation: rollUp 0.4s cubic-bezier(.2,.8,.2,1); }
+  .counter-roll.rolling-down { animation: rollDown 0.4s cubic-bezier(.2,.8,.2,1); }
+  @keyframes rollUp {
+    0% { transform: translateY(100%); opacity: 0; }
+    100% { transform: translateY(0); opacity: 1; }
+  }
+  @keyframes rollDown {
+    0% { transform: translateY(-100%); opacity: 0; }
+    100% { transform: translateY(0); opacity: 1; }
+  }
+
+  .delta-badge {
+    font-size: 0.9rem;
+    font-weight: 700;
+    padding: 5px 12px;
+    border-radius: 999px;
+    opacity: 0;
+    transform: translateY(4px) scale(0.9);
+    transition: opacity 0.25s ease, transform 0.25s ease;
+  }
+  .delta-badge.show { opacity: 1; transform: translateY(0) scale(1); }
+  .delta-badge.join {
+    background: rgba(34,197,94,0.15);
+    color: var(--accent-2);
+    border: 1px solid rgba(74,222,128,0.4);
+  }
+  .delta-badge.leave {
+    background: rgba(240,71,71,0.15);
+    color: #ff8a8a;
+    border: 1px solid rgba(240,71,71,0.4);
+  }
   .console-header {
     display: flex;
     justify-content: space-between;
@@ -528,6 +581,21 @@
 
   <div id="panel-playerlog" class="panel">
     <div class="card">
+      <div class="card-title">
+        <span class="icon-badge">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3"/><path d="M4 20c0-3 2.5-5 5-5s5 2 5 5"/><circle cx="17" cy="9" r="2.3"/><path d="M15 13.5c1.8.3 3.2 1.7 3.5 4"/></svg>
+        </span>
+        Total Pemain Saat Ini
+      </div>
+      <div class="player-counter-box">
+        <div class="counter-roll-wrap">
+          <span id="playerCounterText" class="counter-roll">[-/-]</span>
+        </div>
+        <span id="playerDeltaBadge" class="delta-badge"></span>
+      </div>
+    </div>
+
+    <div class="card">
       <div class="console-header">
         <h2>
           <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3"/><path d="M4 20c0-3 2.5-5 5-5s5 2 5 5"/><circle cx="17" cy="9" r="2.3"/><path d="M15 13.5c1.8.3 3.2 1.7 3.5 4"/></svg>
@@ -619,7 +687,7 @@ async function doPing(isAuto) {
     const info = data.info;
     pushHistory(true, s.avgLatency);
     if (info && info.players !== undefined) {
-      recordPlayerChange(host, port, info.players);
+      recordPlayerChange(host, port, info.players, info.maxPlayers);
     }
 
     if (data.minimalMode) {
@@ -714,9 +782,10 @@ let playerLog = [];
 let lastPlayerCount = null;
 let trackedTarget = null;
 
-function recordPlayerChange(host, port, playersRaw) {
+function recordPlayerChange(host, port, playersRaw, maxPlayersRaw) {
   const players = parseInt(playersRaw, 10);
   if (isNaN(players)) return;
+  const maxPlayers = (maxPlayersRaw === undefined || maxPlayersRaw === '') ? '-' : maxPlayersRaw;
 
   const target = `${host}:${port}`;
   if (target !== trackedTarget) {
@@ -728,6 +797,7 @@ function recordPlayerChange(host, port, playersRaw) {
   if (lastPlayerCount === null) {
     lastPlayerCount = players;
     pushPlayerLog(`Jumlah pemain saat ini: ${players}`, 'info');
+    updatePlayerCounter(players, maxPlayers, null);
     return;
   }
 
@@ -736,6 +806,36 @@ function recordPlayerChange(host, port, playersRaw) {
     const sign = delta > 0 ? '+' : '';
     pushPlayerLog(`Player ${sign}${delta}`, delta > 0 ? 'join' : 'leave');
     lastPlayerCount = players;
+    updatePlayerCounter(players, maxPlayers, delta);
+  } else {
+    updatePlayerCounter(players, maxPlayers, 0);
+  }
+}
+
+let deltaBadgeTimer = null;
+
+function updatePlayerCounter(players, maxPlayers, delta) {
+  const textEl = document.getElementById('playerCounterText');
+  const badgeEl = document.getElementById('playerDeltaBadge');
+  if (!textEl || !badgeEl) return;
+
+  const newText = `[${players}/${maxPlayers}]`;
+  if (textEl.textContent !== newText) {
+    textEl.textContent = newText;
+    if (delta) {
+      textEl.classList.remove('rolling-up', 'rolling-down');
+      void textEl.offsetWidth; // paksa reflow biar animasi bisa diulang
+      textEl.classList.add(delta > 0 ? 'rolling-up' : 'rolling-down');
+    }
+  }
+
+  if (delta) {
+    badgeEl.textContent = (delta > 0 ? '+' : '') + delta;
+    badgeEl.className = 'delta-badge show ' + (delta > 0 ? 'join' : 'leave');
+    clearTimeout(deltaBadgeTimer);
+    deltaBadgeTimer = setTimeout(() => {
+      badgeEl.classList.remove('show');
+    }, 1500);
   }
 }
 
