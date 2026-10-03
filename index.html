@@ -261,27 +261,28 @@
   .tabbar {
     position: fixed;
     left: 50%;
-    bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+    bottom: calc(14px + env(safe-area-inset-bottom, 0px));
     transform: translateX(-50%);
-    width: calc(100% - 32px);
-    max-width: 408px;
-    display: flex;
-    gap: 6px;
-    background: rgba(20, 27, 46, 0.92);
+    width: fit-content;
+    max-width: 92vw;
+    display: inline-flex;
+    gap: 3px;
+    background: rgba(14, 19, 33, 0.95);
     backdrop-filter: blur(12px);
-    border: 1px solid var(--border);
-    border-radius: 18px;
-    padding: 6px;
-    box-shadow: 0 12px 34px rgba(0,0,0,0.5);
+    border: 1.5px solid rgba(74, 222, 128, 0.55);
+    border-radius: 13px;
+    padding: 4px;
+    box-shadow: 0 0 14px rgba(74, 222, 128, 0.3), 0 10px 26px rgba(0,0,0,0.5);
     z-index: 50;
   }
   .tabbar button {
-    flex: 1;
     background: transparent;
     color: var(--muted);
     font-weight: 600;
-    padding: 12px;
-    border-radius: 13px;
+    font-size: 0.74rem;
+    padding: 7px 11px;
+    border-radius: 9px;
+    white-space: nowrap;
     transition: background 0.15s ease, color 0.15s ease;
   }
   .tabbar button.active {
@@ -399,6 +400,9 @@
     word-break: break-all;
   }
   .console-box .line-err { color: #f87171; }
+  .console-box .line-join { color: #4ade80; }
+  .console-box .line-leave { color: #f87171; }
+  .console-box .line-info { color: #8893a8; }
   .console-header {
     display: flex;
     justify-content: space-between;
@@ -522,6 +526,23 @@
     </div>
   </div>
 
+  <div id="panel-playerlog" class="panel">
+    <div class="card">
+      <div class="console-header">
+        <h2>
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3"/><path d="M4 20c0-3 2.5-5 5-5s5 2 5 5"/><circle cx="17" cy="9" r="2.3"/><path d="M15 13.5c1.8.3 3.2 1.7 3.5 4"/></svg>
+          Log Pemain
+        </h2>
+        <button class="btn-small" onclick="clearPlayerLog()">Clear</button>
+      </div>
+      <div class="console-box" id="playerLogBox">Belum ada perubahan jumlah pemain yang tercatat.</div>
+      <div class="note">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01"/><path d="M12 11v5"/></svg>
+        <span>Dicatat dari selisih jumlah pemain antar ping — paling akurat saat Mode Realtime aktif. Tool ini tidak tahu nama pemain, hanya jumlahnya.</span>
+      </div>
+    </div>
+  </div>
+
   <div id="panel-console" class="panel">
     <div class="card">
       <div class="console-header">
@@ -537,6 +558,7 @@
 
   <div class="tabbar">
     <button id="tab-ping" class="active" onclick="switchTab('ping')">Cek Ping</button>
+    <button id="tab-playerlog" onclick="switchTab('playerlog')">Log Pemain</button>
     <button id="tab-console" onclick="switchTab('console')">Console</button>
   </div>
 </div>
@@ -596,6 +618,9 @@ async function doPing(isAuto) {
     statusText.textContent = 'Server online';
     const info = data.info;
     pushHistory(true, s.avgLatency);
+    if (info && info.players !== undefined) {
+      recordPlayerChange(host, port, info.players);
+    }
 
     if (data.minimalMode) {
       infoBox.innerHTML = `
@@ -684,6 +709,64 @@ function renderChart() {
 
 renderChart();
 
+// --- Log Pemain: mencatat setiap kenaikan/penurunan jumlah player ---
+let playerLog = [];
+let lastPlayerCount = null;
+let trackedTarget = null;
+
+function recordPlayerChange(host, port, playersRaw) {
+  const players = parseInt(playersRaw, 10);
+  if (isNaN(players)) return;
+
+  const target = `${host}:${port}`;
+  if (target !== trackedTarget) {
+    trackedTarget = target;
+    lastPlayerCount = null;
+    pushPlayerLog(`Mulai memantau ${target}`, 'info');
+  }
+
+  if (lastPlayerCount === null) {
+    lastPlayerCount = players;
+    pushPlayerLog(`Jumlah pemain saat ini: ${players}`, 'info');
+    return;
+  }
+
+  if (players !== lastPlayerCount) {
+    const delta = players - lastPlayerCount;
+    const sign = delta > 0 ? '+' : '';
+    pushPlayerLog(`Player ${sign}${delta}`, delta > 0 ? 'join' : 'leave');
+    lastPlayerCount = players;
+  }
+}
+
+function pushPlayerLog(text, type) {
+  const time = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', hour12: false });
+  playerLog.push({ time, text, type });
+  if (playerLog.length > 200) playerLog.shift();
+  renderPlayerLog();
+}
+
+function renderPlayerLog() {
+  const box = document.getElementById('playerLogBox');
+  if (!box) return;
+  if (playerLog.length === 0) {
+    box.textContent = 'Belum ada perubahan jumlah pemain yang tercatat.';
+    return;
+  }
+  const wasAtBottom = box.scrollHeight - box.scrollTop - box.clientHeight < 20;
+  box.innerHTML = playerLog
+    .map(e => `<div class="line-${e.type}">[${e.time}] ${escapeHtml(e.text)}</div>`)
+    .join('');
+  if (wasAtBottom) box.scrollTop = box.scrollHeight;
+}
+
+function clearPlayerLog() {
+  playerLog = [];
+  lastPlayerCount = null;
+  trackedTarget = null;
+  renderPlayerLog();
+}
+
 let realtimeTimer = null;
 
 function toggleRealtime() {
@@ -717,13 +800,14 @@ function escapeHtml(str) {
 
 let currentTab = 'ping';
 let consolePollTimer = null;
+const TAB_NAMES = ['ping', 'playerlog', 'console'];
 
 function switchTab(tab) {
   currentTab = tab;
-  document.getElementById('panel-ping').classList.toggle('active', tab === 'ping');
-  document.getElementById('panel-console').classList.toggle('active', tab === 'console');
-  document.getElementById('tab-ping').classList.toggle('active', tab === 'ping');
-  document.getElementById('tab-console').classList.toggle('active', tab === 'console');
+  TAB_NAMES.forEach(name => {
+    document.getElementById(`panel-${name}`).classList.toggle('active', name === tab);
+    document.getElementById(`tab-${name}`).classList.toggle('active', name === tab);
+  });
 
   if (tab === 'console') {
     fetchLogs();
@@ -733,6 +817,10 @@ function switchTab(tab) {
   } else if (consolePollTimer) {
     clearInterval(consolePollTimer);
     consolePollTimer = null;
+  }
+
+  if (tab === 'playerlog') {
+    renderPlayerLog();
   }
 }
 
