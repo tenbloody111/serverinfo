@@ -276,12 +276,68 @@
     font-size: 0.95rem;
     margin: 0;
   }
+  .console-actions {
+    display: flex;
+    gap: 6px;
+  }
   .btn-small {
     width: auto;
     padding: 6px 12px;
     font-size: 0.78rem;
     background: var(--border);
     color: var(--text);
+  }
+  .btn-small:active { background: #475569; }
+  .btn-stop {
+    background: var(--danger);
+    color: #fff;
+  }
+  .btn-stop:active { background: #b91c1c; }
+
+  /* Console fullscreen */
+  .console-card.fullscreen {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    margin: 0;
+    border-radius: 0;
+    border: none;
+    display: flex;
+    flex-direction: column;
+    padding: calc(14px + env(safe-area-inset-top, 0px)) 14px calc(14px + env(safe-area-inset-bottom, 0px));
+  }
+  .console-card.fullscreen .console-box {
+    flex: 1;
+    height: auto;
+    min-height: 0;
+    font-size: 0.85rem;
+  }
+  body.no-scroll { overflow: hidden; }
+
+  /* Progress bar */
+  .progress-wrap { display: none; margin-bottom: 14px; }
+  .progress-wrap.active { display: block; }
+  .progress-track {
+    width: 100%;
+    height: 8px;
+    background: #0f172a;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, var(--accent-dim), var(--accent));
+    border-radius: 999px;
+    transition: width 0.2s linear;
+  }
+  .progress-meta {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 6px;
+    font-size: 0.72rem;
+    color: var(--muted);
   }
 </style>
 </head>
@@ -315,10 +371,10 @@
       </div>
       <div class="slider-row">
         <label for="packetCount"><span>Jumlah Packet</span><span id="packetCountVal">3</span></label>
-        <input type="range" id="packetCount" min="0" max="1000" value="3" oninput="document.getElementById('packetCountVal').textContent = this.value">
+        <input type="range" id="packetCount" min="0" max="10" value="3" oninput="document.getElementById('packetCountVal').textContent = this.value">
         <div class="slider-hint">
           <span>0 = info ringan</span>
-          <span>1000 = packet asli terbanyak</span>
+          <span>10 = packet asli terbanyak</span>
         </div>
       </div>
 
@@ -351,15 +407,26 @@
         <div class="dot" id="statusDot"></div>
         <strong id="statusText">-</strong>
       </div>
+      <div class="progress-wrap" id="progressWrap">
+        <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+        <div class="progress-meta">
+          <span id="progressText">Menunggu balasan...</span>
+          <span id="progressTime">0.0 dtk</span>
+        </div>
+      </div>
       <div id="infoBox"></div>
     </div>
   </div>
 
   <div id="panel-console" class="panel">
-    <div class="card">
+    <div class="card console-card" id="consoleCard">
       <div class="console-header">
         <h2>🖥️ Console Backend</h2>
-        <button class="btn-small" onclick="clearLogs()">Clear</button>
+        <div class="console-actions">
+          <button class="btn-small btn-stop" onclick="stopBackend()" title="Hentikan ping yang sedang berjalan">⏹ Stop</button>
+          <button class="btn-small" id="fullscreenBtn" onclick="toggleConsoleFullscreen()" title="Perbesar console">⛶</button>
+          <button class="btn-small" onclick="clearLogs()">Clear</button>
+        </div>
       </div>
       <div class="console-box" id="consoleBox">Menunggu aktivitas backend...</div>
     </div>
@@ -373,6 +440,54 @@
 
 <script>
 let pingInFlight = false;
+let pingController = null;
+let userStopped = false;
+let progressTimer = null;
+let progressHideTimer = null;
+
+function startProgress(packetCount, timeoutMs) {
+  // Perkiraan waktu tunggu maksimum = jumlah packet x timeout per packet.
+  // Kalau server membalas cepat, bar langsung lompat ke 100%.
+  const maxMs = Math.max(1, packetCount) * timeoutMs;
+  const wrap = document.getElementById('progressWrap');
+  const fill = document.getElementById('progressFill');
+  const time = document.getElementById('progressTime');
+  const text = document.getElementById('progressText');
+  const started = Date.now();
+
+  clearInterval(progressTimer);
+  clearTimeout(progressHideTimer);
+  fill.style.transition = 'none';
+  fill.style.width = '0%';
+  void fill.offsetWidth; // paksa reflow supaya animasi mulai dari 0
+  fill.style.transition = '';
+  wrap.classList.add('active');
+  text.textContent = `Menunggu balasan (maks. ${formatSeconds(maxMs)})`;
+  time.textContent = '0.0 dtk';
+
+  progressTimer = setInterval(() => {
+    const elapsed = Date.now() - started;
+    const pct = Math.min(95, (elapsed / maxMs) * 100);
+    fill.style.width = pct + '%';
+    time.textContent = (elapsed / 1000).toFixed(1) + ' dtk';
+  }, 100);
+}
+
+function finishProgress() {
+  clearInterval(progressTimer);
+  progressTimer = null;
+  const wrap = document.getElementById('progressWrap');
+  const fill = document.getElementById('progressFill');
+  fill.style.width = '100%';
+  progressHideTimer = setTimeout(() => wrap.classList.remove('active'), 250);
+}
+
+function formatSeconds(ms) {
+  const s = Math.round(ms / 1000);
+  if (s >= 60 && s % 60 === 0) return (s / 60) + ' mnt';
+  if (s >= 60) return Math.floor(s / 60) + ' mnt ' + (s % 60) + ' dtk';
+  return s + ' dtk';
+}
 
 async function doPing(isAuto) {
   if (pingInFlight) return; // cegah request numpuk, terutama saat mode realtime
@@ -394,6 +509,8 @@ async function doPing(isAuto) {
   }
 
   pingInFlight = true;
+  userStopped = false;
+  pingController = new AbortController();
   if (!isRealtime) {
     btn.disabled = true;
     btn.textContent = 'Mengecek...';
@@ -404,11 +521,22 @@ async function doPing(isAuto) {
     statusText.textContent = 'Mengecek...';
     infoBox.innerHTML = '';
   }
+  // Progress bar hanya untuk ping manual (mode realtime update tiap 1 detik, jadi tidak perlu)
+  if (!isRealtime) {
+    startProgress(parseInt(count, 10) || 1, parseInt(timeout, 10) || 3000);
+  }
 
   try {
-    const res = await fetch(`${backend}/api/ping?host=${encodeURIComponent(host)}&port=${encodeURIComponent(port)}&count=${encodeURIComponent(count)}&timeout=${encodeURIComponent(timeout)}`);
+    const res = await fetch(`${backend}/api/ping?host=${encodeURIComponent(host)}&port=${encodeURIComponent(port)}&count=${encodeURIComponent(count)}&timeout=${encodeURIComponent(timeout)}`, { signal: pingController.signal });
     const data = await res.json();
     const s = data.summary;
+
+    if (data.cancelled) {
+      statusDot.classList.add('offline');
+      statusText.textContent = 'Dibatalkan';
+      infoBox.innerHTML = `<div class="error-box">Pengecekan dihentikan oleh user.</div>`;
+      return;
+    }
 
     if (!data.ok) {
       statusDot.classList.add('offline');
@@ -444,11 +572,18 @@ async function doPing(isAuto) {
     }
   } catch (e) {
     statusDot.classList.add('offline');
-    statusText.textContent = 'Gagal menghubungi backend';
-    infoBox.innerHTML = `<div class="error-box">${escapeHtml(e.message)} — pastikan server.js aktif di Termux dan alamat backend benar.</div>`;
+    if (e.name === 'AbortError' || userStopped) {
+      statusText.textContent = 'Dibatalkan';
+      infoBox.innerHTML = `<div class="error-box">Pengecekan dihentikan oleh user.</div>`;
+    } else {
+      statusText.textContent = 'Gagal menghubungi backend';
+      infoBox.innerHTML = `<div class="error-box">${escapeHtml(e.message)} — pastikan server.js aktif di Termux dan alamat backend benar.</div>`;
+    }
   } finally {
     pingInFlight = false;
-    if (!isRealtime) {
+    pingController = null;
+    finishProgress();
+    if (!document.getElementById('realtimeToggle').checked) {
       btn.disabled = false;
       btn.textContent = 'Ping Server';
     }
@@ -489,8 +624,48 @@ function escapeHtml(str) {
 let currentTab = 'ping';
 let consolePollTimer = null;
 
+async function stopBackend() {
+  const backend = document.getElementById('backend').value.trim().replace(/\/$/, '');
+
+  // Matikan mode realtime supaya ping tidak dimulai lagi
+  const rt = document.getElementById('realtimeToggle');
+  if (rt.checked) {
+    rt.checked = false;
+    toggleRealtime();
+  }
+
+  userStopped = true;
+  try {
+    await fetch(`${backend}/api/stop`);
+  } catch (e) {
+    // backend tidak terjangkau, tetap hentikan dari sisi UI
+  }
+  if (pingController) pingController.abort();
+  if (currentTab === 'console') fetchLogs();
+}
+
+function setConsoleFullscreen(on) {
+  const card = document.getElementById('consoleCard');
+  const btn = document.getElementById('fullscreenBtn');
+  const box = document.getElementById('consoleBox');
+  card.classList.toggle('fullscreen', on);
+  document.body.classList.toggle('no-scroll', on);
+  btn.textContent = on ? '✕' : '⛶';
+  btn.title = on ? 'Kecilkan console' : 'Perbesar console';
+  box.scrollTop = box.scrollHeight;
+}
+
+function toggleConsoleFullscreen() {
+  setConsoleFullscreen(!document.getElementById('consoleCard').classList.contains('fullscreen'));
+}
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') setConsoleFullscreen(false);
+});
+
 function switchTab(tab) {
   currentTab = tab;
+  if (tab !== 'console') setConsoleFullscreen(false);
   document.getElementById('panel-ping').classList.toggle('active', tab === 'ping');
   document.getElementById('panel-console').classList.toggle('active', tab === 'console');
   document.getElementById('tab-ping').classList.toggle('active', tab === 'ping');
