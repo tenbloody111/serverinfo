@@ -118,7 +118,8 @@
     padding-bottom: 7px;
   }
   #pingBtn.loading .btn-progress { display: block; }
-  #result { display: none; }
+  #result { display: none; transition: opacity 0.15s ease; }
+  #result.refreshing { opacity: 0.55; }
   .status-line {
     display: flex;
     align-items: center;
@@ -602,8 +603,12 @@ async function doPing(isAuto) {
     btn.disabled = true;
     label.textContent = 'Mengecek...';
   }
+  const hadResult = resultBox.dataset.hasResult === '1';
   resultBox.style.display = 'block';
-  if (!isAuto) {
+  if (hadResult) {
+    // Data hasil sebelumnya tetap tampil sampai hasil baru datang (cukup diredupkan)
+    if (!isRealtime) resultBox.classList.add('refreshing');
+  } else if (!isAuto) {
     statusDot.className = 'dot';
     statusText.textContent = 'Mengecek...';
     infoBox.innerHTML = '';
@@ -619,11 +624,14 @@ async function doPing(isAuto) {
     const s = data.summary;
 
     if (data.cancelled) {
+      if (hadResult) return; // dibatalkan: biarkan data sebelumnya tetap tampil
       statusDot.classList.add('offline');
       statusText.textContent = 'Dibatalkan';
       infoBox.innerHTML = `<div class="error-box">Pengecekan dihentikan oleh user.</div>`;
       return;
     }
+
+    resultBox.dataset.hasResult = '1';
 
     if (!data.ok) {
       statusDot.classList.add('offline');
@@ -658,17 +666,22 @@ async function doPing(isAuto) {
       `;
     }
   } catch (e) {
-    statusDot.classList.add('offline');
     if (e.name === 'AbortError' || userStopped) {
-      statusText.textContent = 'Dibatalkan';
-      infoBox.innerHTML = `<div class="error-box">Pengecekan dihentikan oleh user.</div>`;
+      if (!hadResult) {
+        statusDot.classList.add('offline');
+        statusText.textContent = 'Dibatalkan';
+        infoBox.innerHTML = `<div class="error-box">Pengecekan dihentikan oleh user.</div>`;
+      }
     } else {
+      resultBox.dataset.hasResult = '1';
+      statusDot.classList.add('offline');
       statusText.textContent = 'Gagal menghubungi backend';
       infoBox.innerHTML = `<div class="error-box">${escapeHtml(e.message)} — pastikan server.js aktif di Termux dan alamat backend benar.</div>`;
     }
   } finally {
     pingInFlight = false;
     pingController = null;
+    resultBox.classList.remove('refreshing');
     const resetBtn = () => {
       btn.classList.remove('loading');
       if (!document.getElementById('realtimeToggle').checked) {
