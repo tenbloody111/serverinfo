@@ -6,170 +6,255 @@
 <title>Bedrock Ping Checker</title>
 <style>
   :root {
-    --bg: #0f172a;
-    --card: #1e293b;
+    --bg: #0a0f1e;
+    --card: #141b2e;
+    --card-soft: #0f1526;
     --accent: #22c55e;
+    --accent-2: #4ade80;
     --accent-dim: #16a34a;
-    --text: #e2e8f0;
-    --muted: #94a3b8;
-    --danger: #ef4444;
-    --border: #334155;
+    --text: #e8edf6;
+    --muted: #8893a8;
+    --danger: #f04747;
+    --border: #232e47;
+    --radius: 16px;
   }
   * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
   body {
     margin: 0;
-    font-family: -apple-system, system-ui, "Segoe UI", Roboto, sans-serif;
-    background: var(--bg);
+    font-family: -apple-system, system-ui, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background:
+      radial-gradient(900px 500px at 50% -10%, rgba(34,197,94,0.10), transparent),
+      var(--bg);
     color: var(--text);
     min-height: 100vh;
-    padding: 24px 16px calc(100px + env(safe-area-inset-bottom, 0px));
+    padding: 24px 16px calc(104px + env(safe-area-inset-bottom, 0px));
+    -webkit-tap-highlight-color: transparent;
+    font-size: 15.5px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
   }
-  .wrap { max-width: 460px; margin: 0 auto; }
-  h1 {
-    font-size: 1.3rem;
-    text-align: center;
-    margin-bottom: 4px;
-  }
-  .subtitle {
-    text-align: center;
-    color: var(--muted);
-    font-size: 0.85rem;
-    margin-bottom: 24px;
-  }
-  .card {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    padding: 18px;
-    margin-bottom: 16px;
-  }
-  label {
-    display: block;
-    font-size: 0.8rem;
-    color: var(--muted);
-    margin-bottom: 6px;
-  }
-  input {
-    width: 100%;
-    padding: 10px 12px;
-    border-radius: 8px;
-    border: 1px solid var(--border);
-    background: #0f172a;
-    color: var(--text);
-    font-size: 0.95rem;
-    margin-bottom: 14px;
-  }
-  input:focus { outline: 2px solid var(--accent); }
-  select {
-    width: 100%;
-    padding: 10px 12px;
-    border-radius: 8px;
-    border: 1px solid var(--border);
-    background: #0f172a;
-    color: var(--text);
-    font-size: 0.9rem;
-  }
-  select:focus { outline: 2px solid var(--accent); }
-  .row { display: flex; gap: 10px; }
-  .row > div { flex: 1; }
-  button {
-    width: 100%;
-    padding: 12px;
-    border: none;
-    border-radius: 8px;
-    background: var(--accent);
-    color: #04210f;
-    font-weight: 600;
-    font-size: 0.95rem;
-    cursor: pointer;
-  }
-  button:active { background: var(--accent-dim); }
-  button:disabled { opacity: 0.5; }
+  .wrap { max-width: 440px; margin: 0 auto; }
 
-  /* Tombol Ping dengan garis progress di bawah teks */
-  #pingBtn { transition: background 0.15s ease; }
-  .btn-inner {
-    display: inline-flex;
-    flex-direction: column;
-    align-items: stretch;
-    gap: 6px;
+  .icon { width: 18px; height: 18px; flex-shrink: 0; display: block; }
+  .icon-badge {
+    width: 30px; height: 30px;
+    border-radius: 9px;
+    background: rgba(34,197,94,0.12);
+    color: var(--accent-2);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
   }
-  .btn-progress {
-    display: none;
-    height: 4px;
-    min-width: 120px;
-    border-radius: 999px;
-    background: rgba(4, 33, 15, 0.22);
-    overflow: hidden;
+  .icon-badge .icon { width: 16px; height: 16px; }
+
+  .hero { text-align: center; margin-bottom: 26px; }
+  .hero-icon {
+    width: 52px; height: 52px;
+    border-radius: 15px;
+    background: rgba(34,197,94,0.12);
+    color: var(--accent-2);
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 14px;
   }
-  .btn-progress-fill {
-    display: block;
-    height: 100%;
-    width: 0%;
-    background: #04210f;
-    border-radius: 999px;
-    transition: width 0.2s linear;
+  .hero-icon .icon { width: 26px; height: 26px; }
+  .hero h1 {
+    font-size: 1.4rem;
+    line-height: 1.3;
+    font-weight: 800;
+    letter-spacing: -0.015em;
+    margin: 0 0 6px;
   }
-  #pingBtn.loading {
-    opacity: 1;
-    background: var(--accent-dim);
-    cursor: progress;
-    padding-top: 7px;
-    padding-bottom: 7px;
+  .hero .subtitle {
+    color: var(--muted);
+    font-size: 0.88rem;
+    line-height: 1.5;
   }
-  #pingBtn.loading .btn-progress { display: block; }
-  #result { display: none; transition: opacity 0.15s ease; }
-  #result.refreshing { opacity: 0.55; }
-  .status-line {
+
+  .card {
+    background: linear-gradient(180deg, var(--card), var(--card-soft));
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 14px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+  }
+  .card-title {
     display: flex;
     align-items: center;
-    gap: 8px;
-    margin-bottom: 12px;
+    gap: 10px;
+    font-size: 0.96rem;
+    font-weight: 700;
+    letter-spacing: -0.005em;
+    margin-bottom: 16px;
+    color: var(--text);
   }
-  .dot {
-    width: 10px; height: 10px; border-radius: 50%;
-    background: var(--accent);
+  .card-title .sub {
+    font-weight: 400;
+    color: var(--muted);
+    font-size: 0.74rem;
+    margin-left: auto;
   }
-  .dot.offline { background: var(--danger); }
+
+  label {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 0.8rem;
+    color: var(--muted);
+    margin-bottom: 7px;
+    font-weight: 500;
+    line-height: 1.4;
+  }
+  label .icon { width: 14px; height: 14px; color: var(--muted); }
+
+  input, select {
+    width: 100%;
+    padding: 12px 13px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: #0a0f1e;
+    color: var(--text);
+    font-size: 0.96rem;
+    line-height: 1.4;
+    margin-bottom: 15px;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  }
+  input::placeholder { color: #576078; }
+  input:focus, select:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(34,197,94,0.15);
+  }
+  select { -webkit-appearance: none; appearance: none; }
+
+  .row { display: flex; gap: 10px; }
+  .row > div { flex: 1; }
+
+  button {
+    width: 100%;
+    padding: 14px;
+    border: none;
+    border-radius: 11px;
+    background: linear-gradient(180deg, var(--accent-2), var(--accent-dim));
+    color: #042b13;
+    font-weight: 700;
+    font-size: 0.97rem;
+    letter-spacing: 0.01em;
+    cursor: pointer;
+    transition: transform 0.08s ease, opacity 0.15s ease;
+  }
+  button:active { transform: scale(0.98); }
+  button:disabled { opacity: 0.45; }
+  .btn-small {
+    width: auto;
+    padding: 8px 14px;
+    font-size: 0.78rem;
+    background: var(--border);
+    color: var(--text);
+    border-radius: 8px;
+    font-weight: 600;
+  }
+
+  #result { display: none; }
+  .status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    padding: 8px 16px;
+    border-radius: 999px;
+    background: rgba(34,197,94,0.12);
+    border: 1px solid rgba(34,197,94,0.35);
+    color: var(--accent-2);
+    font-weight: 700;
+    font-size: 0.87rem;
+    margin-bottom: 16px;
+  }
+  .status-pill.offline {
+    background: rgba(240,71,71,0.12);
+    border-color: rgba(240,71,71,0.4);
+    color: #ff8a8a;
+  }
+  .status-pill .dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--accent-2);
+    box-shadow: 0 0 8px var(--accent-2);
+    flex-shrink: 0;
+  }
+  .status-pill.offline .dot {
+    background: #ff8a8a;
+    box-shadow: 0 0 8px #ff8a8a;
+  }
+
   .info-row {
     display: flex;
     justify-content: space-between;
-    padding: 8px 0;
+    align-items: baseline;
+    gap: 14px;
+    padding: 11px 0;
     border-bottom: 1px solid var(--border);
-    font-size: 0.9rem;
+    font-size: 0.89rem;
+    line-height: 1.45;
   }
   .info-row:last-child { border-bottom: none; }
-  .info-row span:first-child { color: var(--muted); }
-  .error-box {
-    color: var(--danger);
-    font-size: 0.9rem;
-    text-align: center;
-    padding: 8px 0;
+  .info-row span:first-child { color: var(--muted); flex-shrink: 0; }
+  .info-row span:last-child { text-align: right; font-weight: 600; }
+  .info-row .na { color: #576078; font-weight: 500; font-style: italic; }
+  .info-row.stack {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 5px;
   }
-  .backend-box {
-    font-size: 0.8rem;
+  .info-row.stack span:last-child {
+    text-align: left;
+    word-break: break-word;
+  }
+
+  .note {
+    display: flex;
+    gap: 9px;
+    align-items: flex-start;
+    font-size: 0.76rem;
     color: var(--muted);
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px dashed var(--border);
+    line-height: 1.55;
   }
+  .note .icon { width: 15px; height: 15px; margin-top: 1px; color: var(--muted); }
+
+  .error-box {
+    color: #ff8a8a;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    text-align: center;
+    padding: 6px 0 2px;
+  }
+
   .backend-box-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 6px;
+    margin-bottom: 7px;
   }
   .backend-box-header label { margin-bottom: 0; }
   .indicator {
     display: flex;
     align-items: center;
     gap: 6px;
-    font-size: 0.75rem;
+    font-size: 0.74rem;
+    color: var(--muted);
   }
   .indicator .dot {
-    width: 8px; height: 8px;
-    box-shadow: 0 0 6px var(--accent);
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--accent-2);
+    box-shadow: 0 0 6px var(--accent-2);
+    flex-shrink: 0;
   }
   .indicator .dot.offline {
-    box-shadow: 0 0 6px var(--danger);
+    background: #ff8a8a;
+    box-shadow: 0 0 6px #ff8a8a;
   }
+
   .panel { display: none; }
   .panel.active { display: block; }
 
@@ -179,15 +264,15 @@
     bottom: calc(16px + env(safe-area-inset-bottom, 0px));
     transform: translateX(-50%);
     width: calc(100% - 32px);
-    max-width: 428px;
+    max-width: 408px;
     display: flex;
     gap: 6px;
-    background: rgba(30, 41, 59, 0.92);
-    backdrop-filter: blur(10px);
+    background: rgba(20, 27, 46, 0.92);
+    backdrop-filter: blur(12px);
     border: 1px solid var(--border);
-    border-radius: 16px;
+    border-radius: 18px;
     padding: 6px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.45);
+    box-shadow: 0 12px 34px rgba(0,0,0,0.5);
     z-index: 50;
   }
   .tabbar button {
@@ -196,22 +281,22 @@
     color: var(--muted);
     font-weight: 600;
     padding: 12px;
-    border-radius: 11px;
-    transition: background 0.15s ease;
+    border-radius: 13px;
+    transition: background 0.15s ease, color 0.15s ease;
   }
   .tabbar button.active {
-    background: var(--accent);
-    color: #04210f;
+    background: linear-gradient(180deg, var(--accent-2), var(--accent-dim));
+    color: #042b13;
   }
 
-  .slider-row { margin-bottom: 16px; }
+  .slider-row { margin-bottom: 17px; }
   .slider-row label {
     display: flex;
     justify-content: space-between;
-    margin-bottom: 8px;
+    margin-bottom: 9px;
   }
   .slider-row label span:last-child {
-    color: var(--accent);
+    color: var(--accent-2);
     font-weight: 700;
   }
   input[type="range"] {
@@ -219,39 +304,45 @@
     accent-color: var(--accent);
     margin-bottom: 0;
     padding: 0;
-    height: 28px;
+    height: 26px;
   }
   .slider-hint {
     display: flex;
     justify-content: space-between;
-    font-size: 0.68rem;
+    font-size: 0.7rem;
     color: var(--muted);
-    margin-top: 2px;
+    margin-top: 5px;
+    line-height: 1.4;
   }
 
   .realtime-row {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 14px;
-    padding: 8px 10px;
-    background: #0f172a;
+    margin-bottom: 15px;
+    padding: 11px 13px;
+    background: #0a0f1e;
     border: 1px solid var(--border);
-    border-radius: 8px;
+    border-radius: 11px;
   }
   .realtime-row .rt-label {
     display: flex;
     flex-direction: column;
-    gap: 1px;
+    gap: 2px;
   }
-  .realtime-row .rt-label span:first-child {
-    font-size: 0.85rem;
+  .realtime-row .rt-label .rt-title {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 0.86rem;
     color: var(--text);
     font-weight: 600;
   }
-  .realtime-row .rt-label span:last-child {
-    font-size: 0.68rem;
+  .realtime-row .rt-label .rt-title .icon { width: 14px; height: 14px; color: var(--accent-2); }
+  .realtime-row .rt-label .rt-desc {
+    font-size: 0.7rem;
     color: var(--muted);
+    line-height: 1.4;
   }
   .switch {
     position: relative;
@@ -278,185 +369,85 @@
     border-radius: 50%;
     transition: 0.15s;
   }
-  .switch input:checked + .slider-track {
-    background: var(--accent);
-  }
-  .switch input:checked + .slider-track::before {
-    transform: translateX(16px);
-  }
+  .switch input:checked + .slider-track { background: var(--accent); }
+  .switch input:checked + .slider-track::before { transform: translateX(16px); }
 
-  /* ===== Console ===== */
-  .console-card { padding: 14px; }
+  .chart-wrap { width: 100%; }
+  .chart-legend {
+    display: flex;
+    gap: 18px;
+    font-size: 0.74rem;
+    color: var(--muted);
+    margin-top: 10px;
+    line-height: 1.4;
+  }
+  .chart-legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .legend-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+
+  .console-box {
+    background: #000;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 11px;
+    height: 320px;
+    overflow-y: auto;
+    font-family: "SFMono-Regular", Consolas, Menlo, monospace;
+    font-size: 0.78rem;
+    line-height: 1.6;
+    color: #4ade80;
+    white-space: pre-wrap;
+    word-break: break-all;
+  }
+  .console-box .line-err { color: #f87171; }
   .console-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    margin-bottom: 14px;
+  }
+  .console-header h2 {
+    display: flex;
+    align-items: center;
     gap: 10px;
-    margin-bottom: 12px;
-  }
-  .console-title { min-width: 0; }
-  .console-title h2 {
-    font-size: 0.95rem;
-    margin: 0 0 3px;
-    white-space: nowrap;
-  }
-  .console-meta {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 0.7rem;
-    color: var(--muted);
-  }
-  .live-dot {
-    width: 7px; height: 7px;
-    border-radius: 50%;
-    background: var(--accent);
-    box-shadow: 0 0 6px var(--accent);
-    animation: pulse 1.6s ease-in-out infinite;
-  }
-  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
-  .console-actions { display: flex; gap: 8px; flex-shrink: 0; }
-  .btn-small {
-    width: auto;
-    min-height: 40px;
-    padding: 0 14px;
-    font-size: 0.82rem;
-    background: var(--border);
-    color: var(--text);
-    border-radius: 10px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 5px;
-  }
-  .btn-small:active { background: #475569; }
-  .btn-icon { width: 40px; padding: 0; font-size: 1.05rem; }
-  .btn-stop { background: var(--danger); color: #fff; }
-  .btn-stop:active { background: #b91c1c; }
-
-  .console-wrap { position: relative; }
-  .console-box {
-    background: #05080f;
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 8px 0;
-    height: 58vh;
-    height: 58dvh;
-    min-height: 260px;
-    max-height: 560px;
-    overflow-y: auto;
-    overscroll-behavior: contain;
-    -webkit-overflow-scrolling: touch;
-    font-family: "SFMono-Regular", Consolas, Menlo, monospace;
-    font-size: 0.74rem;
-    line-height: 1.45;
-  }
-  .log-line {
-    display: flex;
-    gap: 8px;
-    padding: 3px 10px 3px 8px;
-    border-left: 3px solid transparent;
-    color: #cbd5e1;
-  }
-  .log-time {
-    flex: none;
-    color: #64748b;
-    font-variant-numeric: tabular-nums;
-  }
-  .log-msg {
-    min-width: 0;
-    white-space: pre-wrap;
-    overflow-wrap: anywhere;
-  }
-  .log-line.ok { color: #4ade80; }
-  .log-line.err {
-    color: #f87171;
-    border-left-color: #ef4444;
-    background: rgba(239, 68, 68, 0.08);
-  }
-  .log-line.warn {
-    color: #fbbf24;
-    border-left-color: #f59e0b;
-    background: rgba(245, 158, 11, 0.08);
-  }
-  .log-line.sep {
-    color: #38bdf8;
-    border-left-color: #38bdf8;
-    font-weight: 600;
-    margin-top: 6px;
-  }
-  .log-line.sep:first-child { margin-top: 0; }
-  .console-empty {
-    color: var(--muted);
-    text-align: center;
-    padding: 40px 16px;
-    font-size: 0.8rem;
-    line-height: 1.6;
-    font-family: -apple-system, system-ui, "Segoe UI", Roboto, sans-serif;
-  }
-  .console-empty.err-text { color: #f87171; }
-
-  .jump-bottom {
-    position: absolute;
-    right: 10px;
-    bottom: 10px;
-    width: 38px;
-    height: 38px;
-    padding: 0;
-    border-radius: 50%;
-    background: var(--accent);
-    color: #04210f;
-    font-size: 1.1rem;
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5);
-    opacity: 0;
-    pointer-events: none;
-    transform: translateY(6px);
-    transition: opacity 0.15s ease, transform 0.15s ease;
-  }
-  .jump-bottom.show { opacity: 1; pointer-events: auto; transform: none; }
-
-  /* Console fullscreen */
-  .console-card.fullscreen {
-    position: fixed;
-    inset: 0;
-    height: 100vh;
-    height: 100dvh;
-    z-index: 100;
+    font-size: 0.96rem;
+    font-weight: 700;
+    letter-spacing: -0.005em;
     margin: 0;
-    border-radius: 0;
-    border: none;
-    display: flex;
-    flex-direction: column;
-    padding: calc(12px + env(safe-area-inset-top, 0px)) 12px calc(12px + env(safe-area-inset-bottom, 0px));
   }
-  .console-card.fullscreen .console-wrap { flex: 1; min-height: 0; }
-  .console-card.fullscreen .console-box {
-    height: 100%;
-    max-height: none;
-    min-height: 0;
-    font-size: 0.8rem;
-  }
-  body.no-scroll { overflow: hidden; }
 </style>
 </head>
 <body>
 <div class="wrap">
-  <h1>🏓 Bedrock Ping Checker</h1>
-  <div class="subtitle">Cek status server Minecraft Bedrock</div>
+  <div class="hero">
+    <div class="hero-icon">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l2 7 4-14 2 7h6"/></svg>
+    </div>
+    <h1>Bedrock Ping Checker</h1>
+    <div class="subtitle">Cek status server Minecraft Bedrock secara real-time</div>
+  </div>
 
-  <div class="card backend-box">
+  <div class="card">
     <div class="backend-box-header">
-      <label for="backend">Alamat backend (Termux)</label>
+      <label for="backend">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 2v4"/><path d="M15 2v4"/><path d="M7 6h10v3a5 5 0 0 1-10 0V6Z"/><path d="M12 14v7"/></svg>
+        Alamat backend (Termux)
+      </label>
       <div class="indicator">
         <div class="dot" id="backendDot"></div>
         <span id="backendStatusText">Mengecek...</span>
       </div>
     </div>
-    <input id="backend" value="http://127.0.0.1:3000" placeholder="http://192.168.x.x:3000" oninput="onBackendChanged()">
+    <input id="backend" value="http://127.0.0.1:3000" placeholder="http://192.168.x.x:3000" oninput="onBackendChanged()" style="margin-bottom:0;">
   </div>
 
   <div id="panel-ping" class="panel active">
     <div class="card">
+      <div class="card-title">
+        <span class="icon-badge">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3a15 15 0 0 1 0 18"/><path d="M12 3a15 15 0 0 0 0 18"/></svg>
+        </span>
+        Target Server
+      </div>
       <div class="row">
         <div>
           <label for="host">Host / IP Server</label>
@@ -467,6 +458,7 @@
           <input id="port" value="19132">
         </div>
       </div>
+
       <div class="slider-row">
         <label for="packetCount"><span>Jumlah Packet</span><span id="packetCountVal">3</span></label>
         <input type="range" id="packetCount" min="0" max="10" value="3" oninput="document.getElementById('packetCountVal').textContent = this.value">
@@ -476,20 +468,24 @@
         </div>
       </div>
 
-      <div style="margin-bottom: 14px;">
-        <label for="timeoutSelect">Timeout / Latensi Jaringan</label>
-        <select id="timeoutSelect">
-          <option value="3000" selected>Cepat (~3 detik)</option>
-          <option value="30000">30 Detik</option>
-          <option value="60000">1 Menit</option>
-          <option value="120000">2 Menit</option>
-        </select>
-      </div>
+      <label for="timeoutSelect">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 8.5a16 16 0 0 1 20 0"/><path d="M5 12a11 11 0 0 1 14 0"/><path d="M8.5 15.5a6 6 0 0 1 7 0"/><circle cx="12" cy="19" r="1.1" fill="currentColor" stroke="none"/></svg>
+        Timeout / Latensi Jaringan
+      </label>
+      <select id="timeoutSelect" style="margin-bottom:15px;">
+        <option value="3000" selected>Cepat (~3 detik)</option>
+        <option value="30000">30 Detik</option>
+        <option value="60000">1 Menit</option>
+        <option value="120000">2 Menit</option>
+      </select>
 
       <div class="realtime-row">
         <div class="rt-label">
-          <span>Mode Realtime</span>
-          <span>Perbarui status tiap 1 detik</span>
+          <div class="rt-title">
+            <svg class="icon" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M13 2 4 14h6l-1 8 9-12h-6l1-8Z"/></svg>
+            Mode Realtime
+          </div>
+          <div class="rt-desc">Perbarui status tiap 1 detik</div>
         </div>
         <label class="switch">
           <input type="checkbox" id="realtimeToggle" onchange="toggleRealtime()">
@@ -497,40 +493,45 @@
         </label>
       </div>
 
-      <button id="pingBtn" onclick="doPing()">
-        <span class="btn-inner">
-          <span id="pingBtnLabel">Ping Server</span>
-          <span class="btn-progress"><span class="btn-progress-fill" id="progressFill"></span></span>
-        </span>
-      </button>
+      <button id="pingBtn" onclick="doPing()">Ping Server</button>
     </div>
 
     <div class="card" id="result">
-      <div class="status-line">
+      <div class="status-pill" id="statusPill">
         <div class="dot" id="statusDot"></div>
-        <strong id="statusText">-</strong>
+        <span id="statusText">-</span>
       </div>
       <div id="infoBox"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">
+        <span class="icon-badge">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v16a2 2 0 0 0 2 2h16"/><path d="M7 15l3.5-4.5 3 3L19 7"/></svg>
+        </span>
+        Riwayat Latency
+        <span class="sub">30 data terakhir</span>
+      </div>
+      <div class="chart-wrap">
+        <svg id="latencyChart" viewBox="0 0 400 120" preserveAspectRatio="none" style="width:100%; height:130px; display:block;"></svg>
+      </div>
+      <div class="chart-legend">
+        <span><i class="legend-dot" style="background:#22c55e;"></i> Berhasil (latency)</span>
+        <span><i class="legend-dot" style="background:#f04747;"></i> Gagal / timeout</span>
+      </div>
     </div>
   </div>
 
   <div id="panel-console" class="panel">
-    <div class="card console-card" id="consoleCard">
+    <div class="card">
       <div class="console-header">
-        <div class="console-title">
-          <h2>🖥️ Console</h2>
-          <div class="console-meta"><span class="live-dot"></span><span id="logCount">0 baris</span></div>
-        </div>
-        <div class="console-actions">
-          <button class="btn-small btn-stop" onclick="stopBackend()" title="Hentikan ping yang sedang berjalan" aria-label="Stop">⏹ Stop</button>
-          <button class="btn-small btn-icon" id="fullscreenBtn" onclick="toggleConsoleFullscreen()" title="Perbesar console" aria-label="Perbesar console">⛶</button>
-          <button class="btn-small btn-icon" onclick="clearLogs()" title="Bersihkan log" aria-label="Bersihkan log">🗑</button>
-        </div>
+        <h2>
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7.5 9.5 10.5 12l-3 2.5"/><path d="M13 15.5h4"/></svg>
+          Console Backend
+        </h2>
+        <button class="btn-small" onclick="clearLogs()">Clear</button>
       </div>
-      <div class="console-wrap">
-        <div class="console-box" id="consoleBox"><div class="console-empty">Menunggu aktivitas backend...</div></div>
-        <button class="jump-bottom" id="jumpBottom" onclick="scrollConsoleToBottom(true)" aria-label="Ke log terbaru">↓</button>
-      </div>
+      <div class="console-box" id="consoleBox">Menunggu aktivitas backend...</div>
     </div>
   </div>
 
@@ -542,39 +543,7 @@
 
 <script>
 let pingInFlight = false;
-let pingController = null;
-let userStopped = false;
-let progressTimer = null;
-let progressHideTimer = null;
-
-function startProgress(packetCount, timeoutMs) {
-  // Perkiraan waktu tunggu maksimum = jumlah packet x timeout per packet.
-  // Kalau server membalas cepat, garis langsung lompat ke 100%.
-  const maxMs = Math.max(1, packetCount) * timeoutMs;
-  const btn = document.getElementById('pingBtn');
-  const fill = document.getElementById('progressFill');
-  const started = Date.now();
-
-  clearInterval(progressTimer);
-  clearTimeout(progressHideTimer);
-  fill.style.transition = 'none';
-  fill.style.width = '0%';
-  void fill.offsetWidth; // paksa reflow supaya animasi mulai dari 0
-  fill.style.transition = '';
-  btn.classList.add('loading');
-
-  progressTimer = setInterval(() => {
-    const pct = Math.min(95, ((Date.now() - started) / maxMs) * 100);
-    fill.style.width = pct + '%';
-  }, 100);
-}
-
-function finishProgress(onDone) {
-  clearInterval(progressTimer);
-  progressTimer = null;
-  document.getElementById('progressFill').style.width = '100%';
-  progressHideTimer = setTimeout(onDone, 250);
-}
+let pingHistory = []; // {ok: bool, latency: number|null}
 
 async function doPing(isAuto) {
   if (pingInFlight) return; // cegah request numpuk, terutama saat mode realtime
@@ -584,9 +553,8 @@ async function doPing(isAuto) {
   const count = document.getElementById('packetCount').value || '1';
   const timeout = document.getElementById('timeoutSelect').value || '3000';
   const btn = document.getElementById('pingBtn');
-  const label = document.getElementById('pingBtnLabel');
   const resultBox = document.getElementById('result');
-  const statusDot = document.getElementById('statusDot');
+  const statusPill = document.getElementById('statusPill');
   const statusText = document.getElementById('statusText');
   const infoBox = document.getElementById('infoBox');
   const isRealtime = document.getElementById('realtimeToggle').checked;
@@ -597,109 +565,130 @@ async function doPing(isAuto) {
   }
 
   pingInFlight = true;
-  userStopped = false;
-  pingController = new AbortController();
   if (!isRealtime) {
     btn.disabled = true;
-    label.textContent = 'Mengecek...';
+    btn.textContent = 'Mengecek...';
   }
-  const hadResult = resultBox.dataset.hasResult === '1';
   resultBox.style.display = 'block';
-  if (hadResult) {
-    // Data hasil sebelumnya tetap tampil sampai hasil baru datang (cukup diredupkan)
-    if (!isRealtime) resultBox.classList.add('refreshing');
-  } else if (!isAuto) {
-    statusDot.className = 'dot';
+  if (!isAuto) {
+    statusPill.classList.remove('offline');
     statusText.textContent = 'Mengecek...';
     infoBox.innerHTML = '';
   }
-  // Progress bar hanya untuk ping manual (mode realtime update tiap 1 detik, jadi tidak perlu)
-  if (!isRealtime) {
-    startProgress(parseInt(count, 10) || 1, parseInt(timeout, 10) || 3000);
-  }
 
   try {
-    const res = await fetch(`${backend}/api/ping?host=${encodeURIComponent(host)}&port=${encodeURIComponent(port)}&count=${encodeURIComponent(count)}&timeout=${encodeURIComponent(timeout)}`, { signal: pingController.signal });
+    const res = await fetch(`${backend}/api/ping?host=${encodeURIComponent(host)}&port=${encodeURIComponent(port)}&count=${encodeURIComponent(count)}&timeout=${encodeURIComponent(timeout)}`);
     const data = await res.json();
     const s = data.summary;
 
-    if (data.cancelled) {
-      if (hadResult) return; // dibatalkan: biarkan data sebelumnya tetap tampil
-      statusDot.classList.add('offline');
-      statusText.textContent = 'Dibatalkan';
-      infoBox.innerHTML = `<div class="error-box">Pengecekan dihentikan oleh user.</div>`;
-      return;
-    }
-
-    resultBox.dataset.hasResult = '1';
-
     if (!data.ok) {
-      statusDot.classList.add('offline');
+      statusPill.classList.add('offline');
       statusText.textContent = 'Server offline / tidak merespon';
       infoBox.innerHTML = `
         <div class="error-box">${escapeHtml(data.error || 'Tidak diketahui')}</div>
         ${s ? `<div class="info-row"><span>Packet loss</span><span>${s.failed}/${s.sent} (${s.lossPercent}%)</span></div>` : ''}
       `;
+      pushHistory(false, null);
       return;
     }
 
-    statusDot.classList.remove('offline');
+    statusPill.classList.remove('offline');
     statusText.textContent = 'Server online';
     const info = data.info;
+    pushHistory(true, s.avgLatency);
 
     if (data.minimalMode) {
-      // Mode info ringan: cuma status + latency
       infoBox.innerHTML = `
         <div class="info-row"><span>Latency</span><span>${s.avgLatency} ms</span></div>
       `;
     } else {
       infoBox.innerHTML = `
-        <div class="info-row"><span>MOTD</span><span>${escapeHtml(info.motd || '-')}</span></div>
+        <div class="info-row stack"><span>MOTD</span><span>${escapeHtml(info.motd || '-')}</span></div>
         <div class="info-row"><span>Versi</span><span>${escapeHtml(info.mcVersion || '-')}</span></div>
         <div class="info-row"><span>Player</span><span>${info.players || '0'} / ${info.maxPlayers || '0'}</span></div>
         <div class="info-row"><span>Gamemode</span><span>${escapeHtml(info.gamemode || '-')}</span></div>
-        <div class="info-row"><span>World / Sub-MOTD</span><span>${escapeHtml(info.motd2 || '-')}</span></div>
+        <div class="info-row stack"><span>World / Sub-MOTD</span><span>${escapeHtml(info.motd2 || '-')}</span></div>
+        <div class="info-row"><span>TPS</span><span class="na">Tidak tersedia</span></div>
         <div class="info-row"><span>Packet terkirim</span><span>${s.sent}</span></div>
         <div class="info-row"><span>Berhasil / Gagal</span><span>${s.success} / ${s.failed}</span></div>
         <div class="info-row"><span>Packet loss</span><span>${s.lossPercent}%</span></div>
         <div class="info-row"><span>Latency (min/avg/max)</span><span>${s.minLatency}/${s.avgLatency}/${s.maxLatency} ms</span></div>
+        <div class="note">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01"/><path d="M12 11v5"/></svg>
+          <span>TPS tidak bisa diambil dari server orang lain — protokol ping Bedrock (RakNet) hanya menyediakan MOTD, versi, player, dan gamemode. TPS butuh akses RCON/plugin yang hanya dipegang admin server tersebut.</span>
+        </div>
       `;
     }
   } catch (e) {
-    if (e.name === 'AbortError' || userStopped) {
-      if (!hadResult) {
-        statusDot.classList.add('offline');
-        statusText.textContent = 'Dibatalkan';
-        infoBox.innerHTML = `<div class="error-box">Pengecekan dihentikan oleh user.</div>`;
-      }
-    } else {
-      resultBox.dataset.hasResult = '1';
-      statusDot.classList.add('offline');
-      statusText.textContent = 'Gagal menghubungi backend';
-      infoBox.innerHTML = `<div class="error-box">${escapeHtml(e.message)} — pastikan server.js aktif di Termux dan alamat backend benar.</div>`;
-    }
+    statusPill.classList.add('offline');
+    statusText.textContent = 'Gagal menghubungi backend';
+    infoBox.innerHTML = `<div class="error-box">${escapeHtml(e.message)} — pastikan server.js aktif di Termux dan alamat backend benar.</div>`;
   } finally {
     pingInFlight = false;
-    pingController = null;
-    resultBox.classList.remove('refreshing');
-    const resetBtn = () => {
-      btn.classList.remove('loading');
-      if (!document.getElementById('realtimeToggle').checked) {
-        btn.disabled = false;
-        label.textContent = 'Ping Server';
-      }
-    };
-    // Ping manual: biarkan garis progress penuh sebentar sebelum tombol kembali normal
-    if (!isRealtime) finishProgress(resetBtn); else resetBtn();
+    if (!isRealtime) {
+      btn.disabled = false;
+      btn.textContent = 'Ping Server';
+    }
   }
 }
+
+function pushHistory(ok, latency) {
+  pingHistory.push({ ok, latency });
+  if (pingHistory.length > 30) pingHistory.shift();
+  renderChart();
+}
+
+function renderChart() {
+  const svg = document.getElementById('latencyChart');
+  const w = 400, h = 120, padL = 8, padR = 8, padT = 10, padB = 16;
+  const data = pingHistory;
+
+  if (data.length === 0) {
+    svg.innerHTML = `<text x="${w/2}" y="${h/2}" fill="#8893a8" font-size="12" text-anchor="middle">Belum ada data ping</text>`;
+    return;
+  }
+
+  const okVals = data.filter(d => d.ok && d.latency != null).map(d => d.latency);
+  const maxVal = Math.max(50, ...okVals) * 1.2;
+  const n = Math.max(1, data.length - 1);
+  const stepX = n === 0 ? 0 : (w - padL - padR) / n;
+
+  let segments = [];
+  let current = [];
+  let dots = '';
+
+  data.forEach((d, i) => {
+    const x = data.length === 1 ? w / 2 : padL + i * stepX;
+    if (d.ok && d.latency != null) {
+      const y = h - padB - (d.latency / maxVal) * (h - padT - padB);
+      current.push(`${x.toFixed(1)},${y.toFixed(1)}`);
+      dots += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="2.6" fill="#22c55e" />`;
+    } else {
+      if (current.length) { segments.push(current); current = []; }
+      const y = h - padB;
+      dots += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="4" fill="#f04747" />`;
+    }
+  });
+  if (current.length) segments.push(current);
+
+  const lines = segments
+    .map(seg => `<polyline points="${seg.join(' ')}" fill="none" stroke="#22c55e" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />`)
+    .join('');
+
+  svg.innerHTML = `
+    <line x1="${padL}" y1="${h - padB}" x2="${w - padR}" y2="${h - padB}" stroke="#232e47" stroke-width="1" />
+    ${lines}
+    ${dots}
+  `;
+}
+
+renderChart();
 
 let realtimeTimer = null;
 
 function toggleRealtime() {
   const checked = document.getElementById('realtimeToggle').checked;
   const btn = document.getElementById('pingBtn');
-  const label = document.getElementById('pingBtnLabel');
   const host = document.getElementById('host').value.trim();
 
   if (checked) {
@@ -709,14 +698,14 @@ function toggleRealtime() {
       return;
     }
     btn.disabled = true;
-    label.textContent = 'Mode realtime aktif...';
+    btn.textContent = 'Mode realtime aktif...';
     doPing(true);
     realtimeTimer = setInterval(() => doPing(true), 1000);
   } else {
     if (realtimeTimer) clearInterval(realtimeTimer);
     realtimeTimer = null;
     btn.disabled = false;
-    label.textContent = 'Ping Server';
+    btn.textContent = 'Ping Server';
   }
 }
 
@@ -729,51 +718,8 @@ function escapeHtml(str) {
 let currentTab = 'ping';
 let consolePollTimer = null;
 
-async function stopBackend() {
-  const backend = document.getElementById('backend').value.trim().replace(/\/$/, '');
-
-  // Matikan mode realtime supaya ping tidak dimulai lagi
-  const rt = document.getElementById('realtimeToggle');
-  if (rt.checked) {
-    rt.checked = false;
-    toggleRealtime();
-  }
-
-  userStopped = true;
-  try {
-    await fetch(`${backend}/api/stop`);
-  } catch (e) {
-    // backend tidak terjangkau, tetap hentikan dari sisi UI
-  }
-  if (pingController) pingController.abort();
-  if (currentTab === 'console') fetchLogs();
-}
-
-function setConsoleFullscreen(on) {
-  const card = document.getElementById('consoleCard');
-  const btn = document.getElementById('fullscreenBtn');
-  const box = document.getElementById('consoleBox');
-  card.classList.toggle('fullscreen', on);
-  document.body.classList.toggle('no-scroll', on);
-  btn.textContent = on ? '✕' : '⛶';
-  btn.title = on ? 'Kecilkan console' : 'Perbesar console';
-  requestAnimationFrame(() => {
-    box.scrollTop = box.scrollHeight;
-    updateJumpButton();
-  });
-}
-
-function toggleConsoleFullscreen() {
-  setConsoleFullscreen(!document.getElementById('consoleCard').classList.contains('fullscreen'));
-}
-
-document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') setConsoleFullscreen(false);
-});
-
 function switchTab(tab) {
   currentTab = tab;
-  if (tab !== 'console') setConsoleFullscreen(false);
   document.getElementById('panel-ping').classList.toggle('active', tab === 'ping');
   document.getElementById('panel-console').classList.toggle('active', tab === 'console');
   document.getElementById('tab-ping').classList.toggle('active', tab === 'ping');
@@ -790,66 +736,27 @@ function switchTab(tab) {
   }
 }
 
-let lastLogSig = null;
-
-function classifyLog(msg) {
-  if (/^---/.test(msg)) return 'sep';
-  if (/error|gagal|timeout/i.test(msg)) return 'err';
-  if (/dibatalkan|stop|memutus|dihentikan|dibersihkan/i.test(msg)) return 'warn';
-  if (/berhasil|menerima|selesai|terkirim/i.test(msg)) return 'ok';
-  return 'info';
-}
-
-function renderLogLine(line) {
-  const m = line.match(/^\[([^\]]+)\]\s*(.*)$/);
-  const time = m ? m[1] : '';
-  const msg = m ? m[2] : line;
-  return `<div class="log-line ${classifyLog(msg)}"><span class="log-time">${escapeHtml(time)}</span><span class="log-msg">${escapeHtml(msg)}</span></div>`;
-}
-
-function isConsoleAtBottom(box) {
-  return box.scrollHeight - box.scrollTop - box.clientHeight < 24;
-}
-
-function updateJumpButton() {
-  const box = document.getElementById('consoleBox');
-  document.getElementById('jumpBottom').classList.toggle('show', !isConsoleAtBottom(box));
-}
-
-function scrollConsoleToBottom(smooth) {
-  const box = document.getElementById('consoleBox');
-  box.scrollTo({ top: box.scrollHeight, behavior: smooth ? 'smooth' : 'auto' });
-}
-
-document.getElementById('consoleBox').addEventListener('scroll', updateJumpButton, { passive: true });
-
 async function fetchLogs() {
   const backend = document.getElementById('backend').value.trim().replace(/\/$/, '');
   const box = document.getElementById('consoleBox');
-  const countEl = document.getElementById('logCount');
   try {
     const res = await fetch(`${backend}/api/logs`);
     const data = await res.json();
-    const logs = data.logs || [];
-    countEl.textContent = logs.length + ' baris';
+    const wasAtBottom = box.scrollHeight - box.scrollTop - box.clientHeight < 20;
 
-    // Lewati render ulang kalau log tidak berubah (tidak berkedip, teks bisa diseleksi)
-    const sig = logs.length + '|' + (logs[logs.length - 1] || '');
-    if (sig === lastLogSig) return;
-    lastLogSig = sig;
-
-    const wasAtBottom = isConsoleAtBottom(box);
-    if (logs.length === 0) {
-      box.innerHTML = '<div class="console-empty">Belum ada aktivitas.<br>Lakukan "Cek Ping" untuk melihat log di sini.</div>';
+    if (!data.logs || data.logs.length === 0) {
+      box.textContent = 'Belum ada aktivitas. Lakukan "Cek Ping" untuk melihat log di sini.';
     } else {
-      box.innerHTML = logs.map(renderLogLine).join('');
+      box.innerHTML = data.logs
+        .map(line => {
+          const cls = /error|gagal|timeout/i.test(line) ? ' class="line-err"' : '';
+          return `<div${cls}>${escapeHtml(line)}</div>`;
+        })
+        .join('');
     }
     if (wasAtBottom) box.scrollTop = box.scrollHeight;
-    updateJumpButton();
   } catch (e) {
-    lastLogSig = null;
-    countEl.textContent = 'offline';
-    box.innerHTML = `<div class="console-empty err-text">Tidak bisa mengambil log dari backend:<br>${escapeHtml(e.message)}</div>`;
+    box.textContent = `Tidak bisa mengambil log dari backend: ${e.message}`;
   }
 }
 
