@@ -406,34 +406,65 @@
 
   .player-counter-box {
     display: flex;
+    flex-direction: column;
     align-items: center;
-    justify-content: center;
-    gap: 14px;
-    padding: 6px 0 4px;
+    gap: 6px;
+    padding: 8px 0 4px;
+  }
+  .counter-main {
+    display: flex;
+    align-items: baseline;
+    gap: 5px;
+    font-variant-numeric: tabular-nums;
   }
   .counter-roll-wrap {
     overflow: hidden;
-    height: 2.4rem;
+    height: 2.5rem;
     display: flex;
     align-items: center;
   }
-  .counter-roll {
-    font-size: 2rem;
+  .counter-current {
+    font-size: 2.15rem;
     font-weight: 800;
     letter-spacing: -0.02em;
     color: var(--text);
     display: inline-block;
-    font-variant-numeric: tabular-nums;
+    line-height: 1;
   }
-  .counter-roll.rolling-up { animation: rollUp 0.4s cubic-bezier(.2,.8,.2,1); }
-  .counter-roll.rolling-down { animation: rollDown 0.4s cubic-bezier(.2,.8,.2,1); }
-  @keyframes rollUp {
-    0% { transform: translateY(100%); opacity: 0; }
-    100% { transform: translateY(0); opacity: 1; }
+  .counter-slash {
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: var(--muted);
+    opacity: 0.6;
   }
-  @keyframes rollDown {
-    0% { transform: translateY(-100%); opacity: 0; }
-    100% { transform: translateY(0); opacity: 1; }
+  .counter-max {
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: var(--muted);
+  }
+  .counter-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .counter-label {
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .counter-current.rolling-up { animation: rollUpGreen 0.5s ease; }
+  .counter-current.rolling-down { animation: rollDownRed 0.5s ease; }
+  @keyframes rollUpGreen {
+    0%   { transform: translateY(100%); opacity: 0; color: var(--accent-2); }
+    55%  { color: var(--accent-2); }
+    100% { transform: translateY(0); opacity: 1; color: var(--text); }
+  }
+  @keyframes rollDownRed {
+    0%   { transform: translateY(-100%); opacity: 0; color: #ff8a8a; }
+    55%  { color: #ff8a8a; }
+    100% { transform: translateY(0); opacity: 1; color: var(--text); }
   }
 
   .delta-badge {
@@ -588,10 +619,17 @@
         Total Pemain Saat Ini
       </div>
       <div class="player-counter-box">
-        <div class="counter-roll-wrap">
-          <span id="playerCounterText" class="counter-roll">[-/-]</span>
+        <div class="counter-row">
+          <div class="counter-main">
+            <div class="counter-roll-wrap">
+              <span id="playerCounterCurrent" class="counter-current">-</span>
+            </div>
+            <span class="counter-slash">/</span>
+            <span id="playerCounterMax" class="counter-max">-</span>
+          </div>
+          <span id="playerDeltaBadge" class="delta-badge"></span>
         </div>
-        <span id="playerDeltaBadge" class="delta-badge"></span>
+        <div class="counter-label">Pemain Online</div>
       </div>
     </div>
 
@@ -815,17 +853,24 @@ function recordPlayerChange(host, port, playersRaw, maxPlayersRaw) {
 let deltaBadgeTimer = null;
 
 function updatePlayerCounter(players, maxPlayers, delta) {
-  const textEl = document.getElementById('playerCounterText');
+  const currentEl = document.getElementById('playerCounterCurrent');
+  const maxEl = document.getElementById('playerCounterMax');
   const badgeEl = document.getElementById('playerDeltaBadge');
-  if (!textEl || !badgeEl) return;
+  if (!currentEl || !maxEl || !badgeEl) return;
 
-  const newText = `[${players}/${maxPlayers}]`;
-  if (textEl.textContent !== newText) {
-    textEl.textContent = newText;
+  // Angka max player statis, tidak ikut beranimasi.
+  const maxText = String(maxPlayers);
+  if (maxEl.textContent !== maxText) maxEl.textContent = maxText;
+
+  // Hanya angka player saat ini yang beranimasi rolling.
+  const currentText = String(players);
+  if (currentEl.textContent !== currentText) {
+    currentEl.textContent = currentText;
     if (delta) {
-      textEl.classList.remove('rolling-up', 'rolling-down');
-      void textEl.offsetWidth; // paksa reflow biar animasi bisa diulang
-      textEl.classList.add(delta > 0 ? 'rolling-up' : 'rolling-down');
+      currentEl.classList.remove('rolling-up', 'rolling-down');
+      void currentEl.offsetWidth; // paksa reflow biar animasi bisa diulang
+      // hijau = bertambah (rolling-up), merah = berkurang (rolling-down)
+      currentEl.classList.add(delta > 0 ? 'rolling-up' : 'rolling-down');
     }
   }
 
